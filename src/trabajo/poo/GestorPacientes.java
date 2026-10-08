@@ -11,8 +11,12 @@ public class GestorPacientes {
         pacientes = new ArrayList<>();
     }
     
-    public void registrarPaciente(Paciente paciente) {
+    public boolean registrarPaciente(Paciente paciente) {
+        if (buscarPaciente(paciente.getDni()) != null) {
+            return false;
+        }
         pacientes.add(paciente);
+        return true;
     }
     
     public void listarPacientes() {
