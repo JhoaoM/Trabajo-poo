@@ -4,24 +4,61 @@ import java.util.Scanner;
 
 public class Menu {
 
+    // Un solo Scanner para todo el programa
     private Scanner sc = new Scanner(System.in);
-    private Login login = new Login();
 
+    // Se crean UNA sola vez, para que las listas no se borren al volver al menu
+    // (gestionUsuarios va primero porque el Login la necesita)
+    private GestionUsuarios gestionUsuarios = new GestionUsuarios();
+    private Login login = new Login(gestionUsuarios);
+    private MenuPaciente menuPaciente = new MenuPaciente();
+    private MenuMedico menuMedico = new MenuMedico();
+
+    // Pantalla de inicio: iniciar sesion, registrarse o salir
     public void iniciar() {
-        if (iniciarSesion()) {
-            mostrarMenu();
-        } else {
-            System.out.println("Demasiados intentos fallidos. Saliendo...");
+        boolean salir = false;
+
+        while (!salir) {
+            System.out.println("\n=== BIENVENIDO ===");
+            System.out.println("1. Iniciar sesion");
+            System.out.println("2. Registrarse");
+            System.out.println("0. Salir");
+            System.out.print("Elige una opcion: ");
+
+            int opcion = leerOpcion();
+
+            switch (opcion) {
+                case 1:
+                    if (iniciarSesion()) {
+                        mostrarMenu();
+                        salir = true; // al salir del menu principal se cierra el programa
+                    }
+                    break;
+                case 2:
+                    gestionUsuarios.registrar(sc);
+                    break;
+                case 0:
+                    System.out.println("Hasta luego!");
+                    salir = true;
+                    break;
+                default:
+                    System.out.println("Opcion invalida");
+            }
         }
     }
 
     private boolean iniciarSesion() {
+        if (!gestionUsuarios.hayUsuarios()) {
+            System.out.println("No hay usuarios registrados. Registrese primero.");
+            return false;
+        }
+
         int intentos = 0;
         while (intentos < 3) {
             System.out.print("Usuario: ");
-            String usuario = sc.nextLine();
+            String usuario = sc.nextLine().trim();
             System.out.print("Contrasena: ");
-            String contrasena = sc.nextLine();
+            String contrasena = sc.nextLine().trim();
 
             if (login.validar(usuario, contrasena)) {
                 System.out.println("Bienvenido!");
@@ -30,6 +67,7 @@ public class Menu {
             intentos++;
             System.out.println("Datos incorrectos. Intentos: " + intentos + "/3");
         }
+        System.out.println("Demasiados intentos fallidos.");
         return false;
     }
 
@@ -45,24 +83,20 @@ public class Menu {
             System.out.println("0. Salir");
             System.out.print("Elige una opcion: ");
 
-            try {
-                opcion = Integer.parseInt(sc.nextLine());
-            } catch (NumberFormatException e) {
-                opcion = -1;
-            }
+            opcion = leerOpcion();
 
             switch (opcion) {
                 case 1:
-                    System.out.println("Pacientes (pendiente: Alison)");
+                    menuPaciente.mostrarMenu(sc);
                     break;
                 case 2:
-                    System.out.println("Usuarios (pendiente: Benjamin)");
+                    gestionUsuarios.menu(sc);
                     break;
                 case 3:
-                    System.out.println("Medicamentos (pendiente: Leonel)");
+                    GestionMedicamentos.iniciar(sc);
                     break;
                 case 4:
-                    System.out.println("Personal medico (pendiente: Matthias)");
+                    menuMedico.mostrarMenu(sc);
                     break;
                 case 5:
                     System.out.println("Citas (pendiente: todos)");
@@ -74,5 +108,14 @@ public class Menu {
                     System.out.println("Opcion invalida");
             }
         } while (opcion != 0);
+    }
+
+    // Lee una opcion numerica sin que el programa se caiga si escriben letras
+    private int leerOpcion() {
+        try {
+            return Integer.parseInt(sc.nextLine().trim());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 }

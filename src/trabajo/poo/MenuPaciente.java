@@ -1,9 +1,10 @@
 package trabajo.poo;
 
-import java.util.Scanner;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
+import java.util.Scanner;
 
 public class MenuPaciente {
 
@@ -12,11 +13,12 @@ public class MenuPaciente {
 
     public MenuPaciente() {
         gestor = new GestorPacientes();
-        teclado = new Scanner(System.in);
     }
 
-    public void mostrarMenu() {
+    // Recibe el Scanner del Menu principal (asi no hay dos Scanner)
+    public void mostrarMenu(Scanner scanner) {
 
+        teclado = scanner;
         int opcion;
 
         do {
@@ -29,8 +31,12 @@ public class MenuPaciente {
             System.out.println("6. Volver al menu principal");
             System.out.print("Seleccione una opcion: ");
 
-            opcion = teclado.nextInt();
-            teclado.nextLine();
+            // Si escriben letras, no se cae el programa
+            try {
+                opcion = Integer.parseInt(teclado.nextLine().trim());
+            } catch (NumberFormatException e) {
+                opcion = -1;
+            }
 
             switch (opcion) {
 
@@ -65,101 +71,105 @@ public class MenuPaciente {
         } while (opcion != 6);
     }
 
-    private void registrar() {
+    // ---------- METODOS AUXILIARES DE LECTURA Y VALIDACION ----------
 
-    String dni;
-
-    do {
-        System.out.print("Ingrese DNI (8 digitos): ");
-        dni = teclado.nextLine();
-
-        if (!dni.matches("\\d{8}")) {
-            System.out.println("DNI no valido. Debe contener exactamente 8 numeros.");
-        }
-
-    } while (!dni.matches("\\d{8}"));
-
-    String nombres;
-
-    do {
-        System.out.print("Ingrese nombres: ");
-        nombres = teclado.nextLine().trim();
-
-        if (!nombres.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+")) {
-            System.out.println("Los nombres solo deben contener letras y espacios.");
-        }
-
-    } while (!nombres.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+"));
-
-    String apellidos;
-
-    do {
-        System.out.print("Ingrese apellidos: ");
-        apellidos = teclado.nextLine().trim();
-
-        if (!apellidos.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+")) {
-            System.out.println("Los apellidos solo deben contener letras y espacios.");
-        }
-
-    } while (!apellidos.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+"));
-
-    String fechaNacimiento;
-    DateTimeFormatter formato = DateTimeFormatter.ofPattern("dd/MM/yy");
-
-    do {
-        System.out.print("Ingrese fecha de nacimiento (DD/MM/AA): ");
-        fechaNacimiento = teclado.nextLine();
-
-        try {
-
-            LocalDate.parse(fechaNacimiento, formato);
-
-        } catch (DateTimeParseException e) {
-
-            System.out.println("Fecha no valida. Use el formato DD/MM/AA y una fecha real.");
-            fechaNacimiento = "";
-
-        }
-
-    } while (fechaNacimiento.isEmpty());
-
-    String telefono;
-
-    do {
-        System.out.print("Ingrese telefono (9 digitos): ");
-        telefono = teclado.nextLine();
-
-        if (!telefono.matches("\\d{9}")) {
-            System.out.println("Telefono no valido. Debe contener exactamente 9 numeros.");
-        }
-
-    } while (!telefono.matches("\\d{9}"));
-
-    Paciente paciente = new Paciente(
-            dni,
-            nombres,
-            apellidos,
-            fechaNacimiento,
-            telefono
-    );
-
-    boolean registrado = gestor.registrarPaciente(paciente);
-    if (registrado) {
-        System.out.println("Paciente registrado correctamente.");
-    } else {
-        System.out.println("No se puede registrar. El DNI ya se encuentra registrado.");
-    }
-    }
-
-    private void buscar() {
+    // DNI: exactamente 8 numeros
+    private String leerDni(String mensaje) {
         String dni;
         do {
-            System.out.print("Ingrese DNI del paciente (8 digitos): ");
-            dni = teclado.nextLine();
+            System.out.print(mensaje);
+            dni = teclado.nextLine().trim();
+
             if (!dni.matches("\\d{8}")) {
                 System.out.println("DNI no valido. Debe contener exactamente 8 numeros.");
             }
         } while (!dni.matches("\\d{8}"));
+        return dni;
+    }
+
+    // Texto con solo letras y espacios (nombres y apellidos)
+    private String leerSoloLetras(String mensaje, String campo) {
+        String texto;
+        do {
+            System.out.print(mensaje);
+            texto = teclado.nextLine().trim();
+
+            if (!texto.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+")) {
+                System.out.println(campo + " solo deben contener letras y espacios.");
+            }
+        } while (!texto.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+"));
+        return texto;
+    }
+
+    // Fecha dd/mm/aaaa: debe existir de verdad (no 31/02) y no ser futura
+    private String leerFechaNacimiento(String mensaje) {
+        DateTimeFormatter formato = DateTimeFormatter
+                .ofPattern("dd/MM/uuuu")
+                .withResolverStyle(ResolverStyle.STRICT);
+
+        while (true) {
+            System.out.print(mensaje);
+            String texto = teclado.nextLine().trim();
+
+            try {
+                LocalDate fecha = LocalDate.parse(texto, formato);
+
+                if (fecha.isAfter(LocalDate.now())) {
+                    System.out.println("La fecha de nacimiento no puede ser futura.");
+                } else {
+                    return texto;
+                }
+
+            } catch (DateTimeParseException e) {
+                System.out.println("Fecha no valida. Use el formato DD/MM/AAAA y una fecha real (ejemplo: 15/03/1990).");
+            }
+        }
+    }
+
+    // Telefono: exactamente 9 numeros
+    private String leerTelefono(String mensaje) {
+        String telefono;
+        do {
+            System.out.print(mensaje);
+            telefono = teclado.nextLine().trim();
+
+            if (!telefono.matches("\\d{9}")) {
+                System.out.println("Telefono no valido. Debe contener exactamente 9 numeros.");
+            }
+        } while (!telefono.matches("\\d{9}"));
+        return telefono;
+    }
+
+    // ---------- OPERACIONES ----------
+
+    private void registrar() {
+
+        String dni = leerDni("Ingrese DNI (8 digitos): ");
+        String nombres = leerSoloLetras("Ingrese nombres: ", "Los nombres");
+        String apellidos = leerSoloLetras("Ingrese apellidos: ", "Los apellidos");
+        String fechaNacimiento = leerFechaNacimiento("Ingrese fecha de nacimiento (DD/MM/AAAA): ");
+        String telefono = leerTelefono("Ingrese telefono (9 digitos): ");
+
+        Paciente paciente = new Paciente(
+                dni,
+                nombres,
+                apellidos,
+                fechaNacimiento,
+                telefono
+        );
+
+        boolean registrado = gestor.registrarPaciente(paciente);
+
+        if (registrado) {
+            System.out.println("Paciente registrado correctamente.");
+        } else {
+            System.out.println("No se puede registrar. El DNI ya se encuentra registrado.");
+        }
+    }
+
+    private void buscar() {
+
+        String dni = leerDni("Ingrese DNI del paciente (8 digitos): ");
 
         Paciente paciente = gestor.buscarPaciente(dni);
 
@@ -177,77 +187,19 @@ public class MenuPaciente {
 
     private void modificar() {
 
-    String dni;
+        String dni = leerDni("Ingrese DNI del paciente a modificar (8 digitos): ");
 
-    do {
-        System.out.print("Ingrese DNI del paciente a modificar (8 digitos): ");
-        dni = teclado.nextLine();
+        Paciente paciente = gestor.buscarPaciente(dni);
 
-        if (!dni.matches("\\d{8}")) {
-            System.out.println("DNI no valido. Debe contener exactamente 8 numeros.");
+        if (paciente == null) {
+            System.out.println("No se encontro el paciente.");
+            return;
         }
 
-    } while (!dni.matches("\\d{8}"));
-
-    Paciente paciente = gestor.buscarPaciente(dni);
-
-    if (paciente != null) {
-
-        String nombres;
-
-        do {
-            System.out.print("Ingrese nuevos nombres: ");
-            nombres = teclado.nextLine().trim();
-
-            if (!nombres.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+")) {
-                System.out.println("Los nombres solo deben contener letras y espacios.");
-            }
-
-        } while (!nombres.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+"));
-
-        String apellidos;
-
-        do {
-            System.out.print("Ingrese nuevos apellidos: ");
-            apellidos = teclado.nextLine().trim();
-
-            if (!apellidos.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+")) {
-                System.out.println("Los apellidos solo deben contener letras y espacios.");
-            }
-
-        } while (!apellidos.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+"));
-
-        String fechaNacimiento;
-        DateTimeFormatter formato = DateTimeFormatter.ofPattern("dd/MM/yy");
-
-        do {
-            System.out.print("Ingrese nueva fecha de nacimiento (DD/MM/AA): ");
-            fechaNacimiento = teclado.nextLine();
-
-            try {
-
-                LocalDate.parse(fechaNacimiento, formato);
-
-            } catch (DateTimeParseException e) {
-
-                System.out.println("Fecha no valida. Use el formato DD/MM/AA y una fecha real.");
-                fechaNacimiento = "";
-
-            }
-
-        } while (fechaNacimiento.isEmpty());
-
-        String telefono;
-
-        do {
-            System.out.print("Ingrese nuevo telefono (9 digitos): ");
-            telefono = teclado.nextLine();
-
-            if (!telefono.matches("\\d{9}")) {
-                System.out.println("Telefono no valido. Debe contener exactamente 9 numeros.");
-            }
-
-        } while (!telefono.matches("\\d{9}"));
+        String nombres = leerSoloLetras("Ingrese nuevos nombres: ", "Los nombres");
+        String apellidos = leerSoloLetras("Ingrese nuevos apellidos: ", "Los apellidos");
+        String fechaNacimiento = leerFechaNacimiento("Ingrese nueva fecha de nacimiento (DD/MM/AAAA): ");
+        String telefono = leerTelefono("Ingrese nuevo telefono (9 digitos): ");
 
         gestor.modificarPaciente(
                 dni,
@@ -258,22 +210,11 @@ public class MenuPaciente {
         );
 
         System.out.println("Paciente modificado correctamente.");
-
-    } else {
-        System.out.println("No se encontro el paciente.");
     }
-}
 
     private void eliminar() {
 
-        String dni;
-        do {
-            System.out.print("Ingrese DNI del paciente a eliminar (8 digitos): ");
-            dni = teclado.nextLine();
-            if (!dni.matches("\\d{8}")) {
-                System.out.println("DNI no valido. Debe contener exactamente 8 numeros.");
-            }
-        } while (!dni.matches("\\d{8}"));
+        String dni = leerDni("Ingrese DNI del paciente a eliminar (8 digitos): ");
 
         boolean eliminado = gestor.eliminarPaciente(dni);
 

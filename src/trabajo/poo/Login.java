@@ -2,10 +2,13 @@ package trabajo.poo;
 
 public class Login {
 
-    private Usuario usuarioValido = new Usuario("admin", "1234");
+    private GestionUsuarios gestionUsuarios;
+
+    public Login(GestionUsuarios gestionUsuarios) {
+        this.gestionUsuarios = gestionUsuarios;
+    }
 
     public boolean validar(String usuario, String contrasena) {
-        return usuarioValido.getUsuario().equals(usuario)
-            && usuarioValido.getContrasena().equals(contrasena);
+        return gestionUsuarios.validarCredenciales(usuario, contrasena);
     }
 }
