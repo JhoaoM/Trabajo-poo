@@ -224,4 +224,9 @@ public class MenuPaciente {
             System.out.println("No se encontro el paciente.");
         }
     }
+
+    // Lo usa el modulo de citas para consultar los pacientes registrados
+    public GestorPacientes getGestor() {
+        return gestor;
+    }
 }
