@@ -14,6 +14,9 @@ public class Menu {
     private MenuPaciente menuPaciente = new MenuPaciente();
     private MenuMedico menuMedico = new MenuMedico();
 
+    // Las citas usan las mismas listas de pacientes y medicos (va despues de ambos)
+    private GestionCitas gestionCitas = new GestionCitas(menuPaciente.getGestor(), menuMedico.getGestion());
+
     // Pantalla de inicio: iniciar sesion, registrarse o salir
     public void iniciar() {
         boolean salir = false;
@@ -99,7 +102,7 @@ public class Menu {
                     menuMedico.mostrarMenu(sc);
                     break;
                 case 5:
-                    System.out.println("Citas (pendiente: todos)");
+                    gestionCitas.menu(sc);
                     break;
                 case 0:
                     System.out.println("Saliendo...");

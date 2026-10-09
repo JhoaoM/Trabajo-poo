@@ -197,4 +197,9 @@ public class MenuMedico {
             System.out.println(">> Medico no encontrado.");
         }
     }
+
+    // Lo usa el modulo de citas para consultar los medicos registrados
+    public GestionMedico getGestion() {
+        return gestion;
+    }
 }
