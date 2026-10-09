@@ -9,29 +9,29 @@ public class GestionMedico {
         listaMedicos = new ArrayList<>();
     }
 
-    // 1. REGISTRAR (Con validación de Código y DNI no repetidos)
+    // REGISTRAR MÉDICO
     public boolean registrarMedico(Medico medico) {
         if (buscarPorCodigo(medico.getCodigo()) != null) {
-            System.out.println("Error: El código ya se encuentra registrado.");
+            System.out.println(">> Error: El codigo ya se encuentra registrado.");
             return false;
         }
         if (buscarPorDni(medico.getDni()) != null) {
-            System.out.println("Error: El DNI ya pertenece a otro médico.");
+            System.out.println(">> Error: El DNI ya esta asignado a otro medico.");
             return false;
         }
         listaMedicos.add(medico);
         return true;
     }
 
-    // 2. LISTAR
+    // LISTAR MÉDICOS
     public ArrayList<Medico> obtenerMedicos() {
         return listaMedicos;
     }
 
-    // 3. BUSCAR POR CÓDIGO
+    // BUSCAR POR CÓDIGO
     public Medico buscarPorCodigo(String codigo) {
         for (Medico m : listaMedicos) {
-            if (m.getCodigo().equalsIgnoreCase(codigo)) {
+            if (m.getCodigo().equalsIgnoreCase(codigo.trim())) {
                 return m;
             }
         }
@@ -41,14 +41,14 @@ public class GestionMedico {
     // BUSCAR POR DNI
     public Medico buscarPorDni(String dni) {
         for (Medico m : listaMedicos) {
-            if (m.getDni().equalsIgnoreCase(dni)) {
+            if (m.getDni().equalsIgnoreCase(dni.trim())) {
                 return m;
             }
         }
         return null;
     }
 
-    // 4. MODIFICAR
+    // MODIFICAR MÉDICO
     public boolean modificarMedico(String codigo, String nuevosNombres, String nuevaEspecialidad, String nuevoTelefono) {
         Medico m = buscarPorCodigo(codigo);
         if (m != null) {
@@ -60,7 +60,7 @@ public class GestionMedico {
         return false;
     }
 
-    // 5. ELIMINAR
+    // ELIMINAR MÉDICO
     public boolean eliminarMedico(String codigo) {
         Medico m = buscarPorCodigo(codigo);
         if (m != null) {

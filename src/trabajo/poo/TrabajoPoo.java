@@ -1,9 +1,16 @@
 package trabajo.poo;
 
+/**
+ *
+ * @author Mathiass
+ */
 public class TrabajoPoo {
 
+    /**
+     * @param args the command line arguments
+     */
     public static void main(String[] args) {
-        MenuMedico menu = new MenuMedico();
-        menu.mostrarMenu();
+        // TODO code application logic here
     }
+    
 }

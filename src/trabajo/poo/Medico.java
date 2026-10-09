@@ -7,11 +7,9 @@ public class Medico {
     private String especialidad;
     private String telefono;
 
-    // Constructor vacío
     public Medico() {
     }
 
-    // Constructor con atributos
     public Medico(String codigo, String dni, String nombres, String especialidad, String telefono) {
         this.codigo = codigo;
         this.dni = dni;
@@ -20,7 +18,6 @@ public class Medico {
         this.telefono = telefono;
     }
 
-    // Getters y Setters
     public String getCodigo() { return codigo; }
     public void setCodigo(String codigo) { this.codigo = codigo; }
 
@@ -38,7 +35,7 @@ public class Medico {
 
     @Override
     public String toString() {
-        return "Código: " + codigo + " | DNI: " + dni + " | Nombres: " + nombres + 
-               " | Especialidad: " + especialidad + " | Teléfono: " + telefono;
+        return "Codigo: " + codigo + " | DNI: " + dni + " | Nombres: " + nombres + 
+               " | Especialidad: " + especialidad + " | Telefono: " + telefono;
     }
 }
