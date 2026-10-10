@@ -10,7 +10,12 @@ public class GestorPacientes {
     public GestorPacientes() {
         pacientes = new ArrayList<>();
     }
-    
+
+    // Lo usan la interfaz grafica y el modulo de citas
+    public ArrayList<Paciente> getPacientes() {
+        return pacientes;
+    }
+
     public boolean registrarPaciente(Paciente paciente) {
         if (buscarPaciente(paciente.getDni()) != null) {
             return false;
@@ -18,17 +23,22 @@ public class GestorPacientes {
         pacientes.add(paciente);
         return true;
     }
-    
+
     public void listarPacientes() {
+        if (pacientes.isEmpty()) {
+            System.out.println("No hay pacientes registrados.");
+            return;
+        }
         for (Paciente paciente : pacientes) {
             System.out.println("DNI: " + paciente.getDni());
             System.out.println("Nombres: " + paciente.getNombres());
             System.out.println("Apellidos: " + paciente.getApellidos());
             System.out.println("Fecha de nacimiento: " + paciente.getFechaNacimiento());
-            System.out.println("Teléfono: " + paciente.getTelefono());
+            System.out.println("Telefono: " + paciente.getTelefono());
             System.out.println("-------------------------");
         }
-    } 
+    }
+
     public Paciente buscarPaciente(String dni) {
         for (Paciente paciente : pacientes) {
             if (paciente.getDni().equals(dni)) {
@@ -38,7 +48,8 @@ public class GestorPacientes {
 
         return null;
     }
-     public boolean modificarPaciente(String dni, String nombres, String apellidos,
+
+    public boolean modificarPaciente(String dni, String nombres, String apellidos,
             String fechaNacimiento, String telefono) {
 
         Paciente paciente = buscarPaciente(dni);
@@ -53,14 +64,15 @@ public class GestorPacientes {
 
         return false;
     }
-     public boolean eliminarPaciente(String dni) {
-         Paciente paciente = buscarPaciente(dni);
-         
-         if (paciente != null) {
-             pacientes.remove(paciente);
-             return true;
-         }
-         
-         return false;
-     }
+
+    public boolean eliminarPaciente(String dni) {
+        Paciente paciente = buscarPaciente(dni);
+
+        if (paciente != null) {
+            pacientes.remove(paciente);
+            return true;
+        }
+
+        return false;
+    }
 }
