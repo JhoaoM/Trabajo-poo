@@ -29,10 +29,10 @@ public class PanelMedicos extends PanelCrud {
 
     private String validar(String[] v) {
         return primerError(
-                exigir(v[0], "El codigo"),
+                validarCodigo(v[0], "El codigo"),
                 validarDni(v[1]),
-                validarLetras(v[2], "Los nombres"),
-                validarLetras(v[3], "La especialidad"),
+                validarLetras(v[2], "Los nombres", 3, 50),
+                validarLetras(v[3], "La especialidad", 3, 30),
                 validarTelefono(v[4]));
     }
 

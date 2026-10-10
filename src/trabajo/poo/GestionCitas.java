@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class GestionCitas {
@@ -18,6 +19,8 @@ public class GestionCitas {
             .ofPattern("HH:mm")
             .withResolverStyle(ResolverStyle.STRICT);
 
+    private static final String ARCHIVO = "citas.txt";
+
     private ArrayList<Cita> citas = new ArrayList<>();
     private int siguienteId = 1;
 
@@ -29,6 +32,7 @@ public class GestionCitas {
     public GestionCitas(GestorPacientes pacientes, GestionMedico medicos) {
         this.pacientes = pacientes;
         this.medicos = medicos;
+        cargar();
     }
 
     // Recibe el Scanner del Menu principal (asi no hay dos Scanner)
@@ -110,6 +114,7 @@ public class GestionCitas {
 
         Cita cita = new Cita(siguienteId++, dni, medico.getCodigo(), fecha, hora, motivo);
         citas.add(cita);
+        guardar();
 
         System.out.println("Cita registrada correctamente. Numero de cita: " + cita.getId());
     }
@@ -169,6 +174,7 @@ public class GestionCitas {
         cita.setFecha(fecha);
         cita.setHora(hora);
         cita.setMotivo(motivo);
+        guardar();
 
         System.out.println("Cita modificada correctamente.");
     }
@@ -185,6 +191,7 @@ public class GestionCitas {
         }
 
         citas.remove(cita);
+        guardar();
         System.out.println("Cita cancelada correctamente.");
     }
 
@@ -211,14 +218,16 @@ public class GestionCitas {
         if (error != null) {
             return error;
         }
-        if (motivo.isEmpty()) {
-            return "El motivo es obligatorio.";
+        error = validarMotivo(motivo);
+        if (error != null) {
+            return error;
         }
         String choque = buscarChoque(dni, medico.getCodigo(), fecha, hora, -1);
         if (choque != null) {
             return choque;
         }
         citas.add(new Cita(siguienteId++, dni, medico.getCodigo(), fecha, hora, motivo));
+        guardar();
         return null;
     }
 
@@ -231,8 +240,9 @@ public class GestionCitas {
         if (error != null) {
             return error;
         }
-        if (motivo.isEmpty()) {
-            return "El motivo es obligatorio.";
+        error = validarMotivo(motivo);
+        if (error != null) {
+            return error;
         }
         String choque = buscarChoque(cita.getDniPaciente(), cita.getCodigoMedico(),
                 fecha, hora, cita.getId());
@@ -242,6 +252,7 @@ public class GestionCitas {
         cita.setFecha(fecha);
         cita.setHora(hora);
         cita.setMotivo(motivo);
+        guardar();
         return null;
     }
 
@@ -251,7 +262,51 @@ public class GestionCitas {
             return "Cita no encontrada.";
         }
         citas.remove(cita);
+        guardar();
         return null;
+    }
+
+    // Motivo: de 3 a 100 caracteres
+    private String validarMotivo(String motivo) {
+        if (motivo.isEmpty()) {
+            return "El motivo es obligatorio.";
+        }
+        if (motivo.contains(";")) {
+            return "El motivo no puede contener el caracter ;";
+        }
+        if (motivo.length() < 3 || motivo.length() > 100) {
+            return "El motivo debe tener entre 3 y 100 caracteres.";
+        }
+        return null;
+    }
+
+    // ---------- GUARDAR Y CARGAR EN ARCHIVO (citas.txt) ----------
+
+    private void guardar() {
+        List<String> lineas = new ArrayList<>();
+        for (Cita c : citas) {
+            lineas.add(c.getId() + ";"
+                    + Archivo.limpiar(c.getDniPaciente()) + ";"
+                    + Archivo.limpiar(c.getCodigoMedico()) + ";"
+                    + Archivo.limpiar(c.getFecha()) + ";"
+                    + Archivo.limpiar(c.getHora()) + ";"
+                    + Archivo.limpiar(c.getMotivo()));
+        }
+        Archivo.escribir(ARCHIVO, lineas);
+    }
+
+    private void cargar() {
+        for (String[] c : Archivo.leer(ARCHIVO, 6)) {
+            try {
+                int id = Integer.parseInt(c[0]);
+                citas.add(new Cita(id, c[1], c[2], c[3], c[4], c[5]));
+                if (id >= siguienteId) {
+                    siguienteId = id + 1;
+                }
+            } catch (NumberFormatException e) {
+                // linea danada: se ignora
+            }
+        }
     }
 
     private String validarFechaHora(String fecha, String hora) {

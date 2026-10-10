@@ -79,23 +79,8 @@ public class GestionUsuarios {
         System.out.print("Contrasena: ");
         String contrasena = sc.nextLine().trim();
 
-        if (nombre.isBlank() || usuario.isBlank() || contrasena.isBlank()) {
-            System.out.println("Todos los datos son obligatorios.");
-            return;
-        }
-        // El punto y coma separa los datos dentro del archivo
-        if (nombre.contains(";") || usuario.contains(";") || contrasena.contains(";")) {
-            System.out.println("No se permite el caracter ; en los datos.");
-            return;
-        }
-        if (buscarPorUsuario(usuario) != null) {
-            System.out.println("Ese usuario ya existe.");
-            return;
-        }
-
-        lista.add(new Usuario(siguienteId++, nombre, usuario, contrasena));
-        guardar();
-        System.out.println("Usuario registrado.");
+        String error = registrarDatos(nombre, usuario, contrasena);
+        System.out.println(error == null ? "Usuario registrado." : error);
     }
 
     public void listar() {
@@ -120,8 +105,8 @@ public class GestionUsuarios {
 
     public void modificar() {
         System.out.print("Usuario a modificar: ");
-        Usuario u = buscarPorUsuario(sc.nextLine().trim());
-        if (u == null) {
+        String usuario = sc.nextLine().trim();
+        if (buscarPorUsuario(usuario) == null) {
             System.out.println("No encontrado.");
             return;
         }
@@ -130,18 +115,8 @@ public class GestionUsuarios {
         System.out.print("Nueva contrasena (Enter para no cambiar): ");
         String contrasena = sc.nextLine().trim();
 
-        if (nombre.contains(";") || contrasena.contains(";")) {
-            System.out.println("No se permite el caracter ; en los datos.");
-            return;
-        }
-        if (!nombre.isBlank()) {
-            u.setNombre(nombre);
-        }
-        if (!contrasena.isBlank()) {
-            u.setContrasena(contrasena);
-        }
-        guardar();
-        System.out.println("Usuario modificado.");
+        String error = modificarDatos(usuario, nombre, contrasena);
+        System.out.println(error == null ? "Usuario modificado." : error);
     }
 
     public void eliminar() {
@@ -173,11 +148,12 @@ public class GestionUsuarios {
     }
 
     public String registrarDatos(String nombre, String usuario, String contrasena) {
-        if (nombre.isBlank() || usuario.isBlank() || contrasena.isBlank()) {
-            return "Todos los datos son obligatorios.";
-        }
-        if (nombre.contains(";") || usuario.contains(";") || contrasena.contains(";")) {
-            return "No se permite el caracter ; en los datos.";
+        String error = primerError(
+                validarNombre(nombre),
+                validarUsuario(usuario),
+                validarContrasena(contrasena));
+        if (error != null) {
+            return error;
         }
         if (buscarPorUsuario(usuario) != null) {
             return "Ese usuario ya existe.";
@@ -193,8 +169,17 @@ public class GestionUsuarios {
         if (u == null) {
             return "Usuario no encontrado.";
         }
-        if (nombre.contains(";") || contrasena.contains(";")) {
-            return "No se permite el caracter ; en los datos.";
+        if (!nombre.isBlank()) {
+            String error = validarNombre(nombre);
+            if (error != null) {
+                return error;
+            }
+        }
+        if (!contrasena.isBlank()) {
+            String error = validarContrasena(contrasena);
+            if (error != null) {
+                return error;
+            }
         }
         if (!nombre.isBlank()) {
             u.setNombre(nombre);
@@ -213,6 +198,67 @@ public class GestionUsuarios {
         }
         lista.remove(u);
         guardar();
+        return null;
+    }
+
+    // ---------- REGLAS DE LOS CAMPOS ----------
+    // Nombre: 3 a 50 caracteres.
+    // Usuario: 4 a 20 caracteres; solo letras, numeros y guion bajo (_).
+    // Contrasena: 6 a 20 caracteres, sin espacios.
+    // El caracter ; no se permite porque separa los datos dentro del archivo.
+
+    private static final int NOMBRE_MIN = 3;
+    private static final int NOMBRE_MAX = 50;
+    private static final int USUARIO_MIN = 4;
+    private static final int USUARIO_MAX = 20;
+    private static final int CONTRASENA_MIN = 6;
+    private static final int CONTRASENA_MAX = 20;
+
+    private static String validarNombre(String nombre) {
+        if (nombre.isBlank()) {
+            return "El nombre es obligatorio.";
+        }
+        if (nombre.contains(";")) {
+            return "No se permite el caracter ; en el nombre.";
+        }
+        if (nombre.length() < NOMBRE_MIN || nombre.length() > NOMBRE_MAX) {
+            return "El nombre debe tener entre " + NOMBRE_MIN + " y " + NOMBRE_MAX + " caracteres.";
+        }
+        return null;
+    }
+
+    private static String validarUsuario(String usuario) {
+        if (usuario.isBlank()) {
+            return "El usuario es obligatorio.";
+        }
+        if (usuario.length() < USUARIO_MIN || usuario.length() > USUARIO_MAX) {
+            return "El usuario debe tener entre " + USUARIO_MIN + " y " + USUARIO_MAX + " caracteres.";
+        }
+        if (!usuario.matches("[A-Za-z0-9_]+")) {
+            return "El usuario solo puede tener letras, numeros y guion bajo (_), sin espacios.";
+        }
+        return null;
+    }
+
+    private static String validarContrasena(String contrasena) {
+        if (contrasena.isBlank()) {
+            return "La contrasena es obligatoria.";
+        }
+        if (contrasena.length() < CONTRASENA_MIN || contrasena.length() > CONTRASENA_MAX) {
+            return "La contrasena debe tener entre " + CONTRASENA_MIN + " y " + CONTRASENA_MAX + " caracteres.";
+        }
+        if (contrasena.contains(" ") || contrasena.contains(";")) {
+            return "La contrasena no puede tener espacios ni el caracter ;";
+        }
+        return null;
+    }
+
+    private static String primerError(String... errores) {
+        for (String error : errores) {
+            if (error != null) {
+                return error;
+            }
+        }
         return null;
     }
 

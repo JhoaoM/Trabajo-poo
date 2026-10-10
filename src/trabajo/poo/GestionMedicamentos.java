@@ -3,12 +3,20 @@ package trabajo.poo;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class GestionMedicamentos {
 
+    private static final String ARCHIVO = "medicamentos.txt";
+
     private static final ArrayList<Medicamentos> medicamentos = new ArrayList<>();
     private static Scanner sc;
+
+    // Al usar la clase por primera vez se leen los medicamentos guardados
+    static {
+        cargar();
+    }
 
     // Lo llama el Menu principal
     public static void iniciar(Scanner scanner) {
@@ -116,6 +124,10 @@ public class GestionMedicamentos {
 
     // ---------- METODOS PARA LA INTERFAZ GRAFICA ----------
     // Devuelven un mensaje de error, o null si todo salio bien
+    // Reglas: codigo 2-10 (letras, numeros y guion), nombre 2-50,
+    // descripcion hasta 100 (opcional), cantidad de 1 a 10000, fecha real.
+
+    private static final int CANTIDAD_MAX = 10000;
 
     public static ArrayList<Medicamentos> getMedicamentos() {
         return medicamentos;
@@ -123,19 +135,22 @@ public class GestionMedicamentos {
 
     public static String registrarDatos(String codigo, String nombre, String descripcion,
                                         String cantidad, String fecha) {
-        if (codigo.isBlank()) {
-            return "El codigo es obligatorio.";
-        }
-        if (buscarPorCodigo(codigo.trim()) != null) {
-            return "El codigo ya existe.";
-        }
-        String error = validarDatos(nombre, cantidad, fecha);
+        codigo = codigo.trim();
+        String error = validarCodigo(codigo);
         if (error != null) {
             return error;
         }
-        medicamentos.add(new Medicamentos(codigo.trim(), nombre.trim(), descripcion.trim(),
+        if (buscarPorCodigo(codigo) != null) {
+            return "El codigo ya existe.";
+        }
+        error = validarDatos(nombre, descripcion, cantidad, fecha);
+        if (error != null) {
+            return error;
+        }
+        medicamentos.add(new Medicamentos(codigo, nombre.trim(), descripcion.trim(),
                 Integer.parseInt(cantidad.trim()),
                 LocalDate.parse(fecha.trim(), Medicamentos.FORMATO)));
+        guardar();
         return null;
     }
 
@@ -145,7 +160,7 @@ public class GestionMedicamentos {
         if (m == null) {
             return "Medicamento no encontrado.";
         }
-        String error = validarDatos(nombre, cantidad, fecha);
+        String error = validarDatos(nombre, descripcion, cantidad, fecha);
         if (error != null) {
             return error;
         }
@@ -153,6 +168,7 @@ public class GestionMedicamentos {
         m.setDescripcion(descripcion.trim());
         m.setCantidad(Integer.parseInt(cantidad.trim()));
         m.setFechaVencimiento(LocalDate.parse(fecha.trim(), Medicamentos.FORMATO));
+        guardar();
         return null;
     }
 
@@ -162,16 +178,46 @@ public class GestionMedicamentos {
             return "Medicamento no encontrado.";
         }
         medicamentos.remove(m);
+        guardar();
         return null;
     }
 
-    private static String validarDatos(String nombre, String cantidad, String fecha) {
-        if (nombre.isBlank()) {
+    private static String validarCodigo(String codigo) {
+        if (codigo.isBlank()) {
+            return "El codigo es obligatorio.";
+        }
+        if (codigo.length() < 2 || codigo.length() > 10) {
+            return "El codigo debe tener entre 2 y 10 caracteres.";
+        }
+        if (!codigo.matches("[A-Za-z0-9-]+")) {
+            return "El codigo solo puede tener letras, numeros y guion (-), sin espacios.";
+        }
+        return null;
+    }
+
+    private static String validarDatos(String nombre, String descripcion, String cantidad, String fecha) {
+        nombre = nombre.trim();
+        descripcion = descripcion.trim();
+
+        if (nombre.isEmpty()) {
             return "El nombre es obligatorio.";
         }
+        if (nombre.length() < 2 || nombre.length() > 50) {
+            return "El nombre debe tener entre 2 y 50 caracteres.";
+        }
+        if (nombre.contains(";") || descripcion.contains(";")) {
+            return "No se permite el caracter ; en el nombre ni en la descripcion.";
+        }
+        if (descripcion.length() > 100) {
+            return "La descripcion no puede pasar de 100 caracteres.";
+        }
         try {
-            if (Integer.parseInt(cantidad.trim()) <= 0) {
+            int n = Integer.parseInt(cantidad.trim());
+            if (n <= 0) {
                 return "La cantidad debe ser mayor que 0.";
+            }
+            if (n > CANTIDAD_MAX) {
+                return "La cantidad no puede pasar de " + CANTIDAD_MAX + ".";
             }
         } catch (NumberFormatException e) {
             return "La cantidad debe ser un numero entero.";
@@ -182,6 +228,32 @@ public class GestionMedicamentos {
             return "Fecha invalida. Use DD/MM/AAAA (ejemplo: 25/12/2027).";
         }
         return null;
+    }
+
+    // ---------- GUARDAR Y CARGAR EN ARCHIVO (medicamentos.txt) ----------
+
+    private static void guardar() {
+        List<String> lineas = new ArrayList<>();
+        for (Medicamentos m : medicamentos) {
+            lineas.add(Archivo.limpiar(m.getCodigo()) + ";"
+                    + Archivo.limpiar(m.getNombre()) + ";"
+                    + Archivo.limpiar(m.getDescripcion()) + ";"
+                    + m.getCantidad() + ";"
+                    + m.getFechaVencimiento().format(Medicamentos.FORMATO));
+        }
+        Archivo.escribir(ARCHIVO, lineas);
+    }
+
+    private static void cargar() {
+        for (String[] c : Archivo.leer(ARCHIVO, 5)) {
+            try {
+                medicamentos.add(new Medicamentos(c[0], c[1], c[2],
+                        Integer.parseInt(c[3]),
+                        LocalDate.parse(c[4], Medicamentos.FORMATO)));
+            } catch (NumberFormatException | DateTimeParseException e) {
+                // linea danada: se ignora
+            }
+        }
     }
 
     // ---------- METODOS AUXILIARES ----------
@@ -226,6 +298,7 @@ public class GestionMedicamentos {
         LocalDate fecha = leerFecha("Fecha de vencimiento (dd/mm/aaaa): ", false);
 
         medicamentos.add(new Medicamentos(codigo, nombre, descripcion, cantidad, fecha));
+        guardar();
 
         System.out.println("Medicamento registrado correctamente.");
         if (fecha.isBefore(LocalDate.now())) {
@@ -308,6 +381,7 @@ public class GestionMedicamentos {
             m.setFechaVencimiento(fecha);
         }
 
+        guardar();
         System.out.println("Medicamento modificado correctamente.");
     }
 
@@ -326,6 +400,7 @@ public class GestionMedicamentos {
 
         if (respuesta.equalsIgnoreCase("S")) {
             medicamentos.remove(m);
+            guardar();
             System.out.println("Medicamento eliminado correctamente.");
         } else {
             System.out.println("Eliminacion cancelada.");

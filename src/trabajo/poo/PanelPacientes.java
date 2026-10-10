@@ -31,8 +31,8 @@ public class PanelPacientes extends PanelCrud {
     private String validar(String[] v) {
         return primerError(
                 validarDni(v[0]),
-                validarLetras(v[1], "Los nombres"),
-                validarLetras(v[2], "Los apellidos"),
+                validarLetras(v[1], "Los nombres", 2, 50),
+                validarLetras(v[2], "Los apellidos", 2, 50),
                 validarNacimiento(v[3]),
                 validarTelefono(v[4]));
     }

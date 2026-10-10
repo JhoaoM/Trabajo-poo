@@ -269,12 +269,42 @@ public abstract class PanelCrud extends JPanel {
         return dni.matches("\\d{8}") ? null : "El DNI debe tener exactamente 8 numeros.";
     }
 
+    // 9 digitos y que empiece con 9 (celulares de Peru)
     protected static String validarTelefono(String telefono) {
-        return telefono.matches("\\d{9}") ? null : "El telefono debe tener exactamente 9 numeros.";
+        return telefono.matches("9\\d{8}")
+                ? null
+                : "El telefono debe tener 9 numeros y empezar con 9.";
     }
 
-    protected static String validarLetras(String texto, String campo) {
-        // \\u00e1... son las letras con tilde y la ñ (asi no dependen de la codificacion del archivo)
+    // Texto obligatorio con largo minimo y maximo
+    protected static String validarLargo(String valor, String campo, int min, int max) {
+        if (valor.isEmpty()) {
+            return campo + " es obligatorio.";
+        }
+        if (valor.length() < min || valor.length() > max) {
+            return campo + " debe tener entre " + min + " y " + max + " caracteres.";
+        }
+        return null;
+    }
+
+    // Codigo: de 2 a 10 caracteres; letras, numeros y guion, sin espacios
+    protected static String validarCodigo(String codigo, String campo) {
+        String error = validarLargo(codigo, campo, 2, 10);
+        if (error != null) {
+            return error;
+        }
+        return codigo.matches("[A-Za-z0-9-]+")
+                ? null
+                : campo + " solo puede tener letras, numeros y guion (-), sin espacios.";
+    }
+
+    // Solo letras y espacios, con largo minimo y maximo
+    protected static String validarLetras(String texto, String campo, int min, int max) {
+        String error = validarLargo(texto, campo, min, max);
+        if (error != null) {
+            return error;
+        }
+        // \\u00e1... son las letras con tilde y la enie (asi no dependen de la codificacion del archivo)
         return texto.matches("[a-zA-Z\\u00e1\\u00e9\\u00ed\\u00f3\\u00fa\\u00c1\\u00c9\\u00cd\\u00d3\\u00da\\u00f1\\u00d1 ]+")
                 ? null
                 : campo + ": solo se permiten letras y espacios.";

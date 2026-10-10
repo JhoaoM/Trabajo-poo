@@ -2,3 +2,7 @@
 /dist/
 
 usuarios.txt
+pacientes.txt
+medicos.txt
+medicamentos.txt
+citas.txt
