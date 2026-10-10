@@ -114,6 +114,76 @@ public class GestionMedicamentos {
         }
     }
 
+    // ---------- METODOS PARA LA INTERFAZ GRAFICA ----------
+    // Devuelven un mensaje de error, o null si todo salio bien
+
+    public static ArrayList<Medicamentos> getMedicamentos() {
+        return medicamentos;
+    }
+
+    public static String registrarDatos(String codigo, String nombre, String descripcion,
+                                        String cantidad, String fecha) {
+        if (codigo.isBlank()) {
+            return "El codigo es obligatorio.";
+        }
+        if (buscarPorCodigo(codigo.trim()) != null) {
+            return "El codigo ya existe.";
+        }
+        String error = validarDatos(nombre, cantidad, fecha);
+        if (error != null) {
+            return error;
+        }
+        medicamentos.add(new Medicamentos(codigo.trim(), nombre.trim(), descripcion.trim(),
+                Integer.parseInt(cantidad.trim()),
+                LocalDate.parse(fecha.trim(), Medicamentos.FORMATO)));
+        return null;
+    }
+
+    public static String modificarDatos(String codigo, String nombre, String descripcion,
+                                        String cantidad, String fecha) {
+        Medicamentos m = buscarPorCodigo(codigo);
+        if (m == null) {
+            return "Medicamento no encontrado.";
+        }
+        String error = validarDatos(nombre, cantidad, fecha);
+        if (error != null) {
+            return error;
+        }
+        m.setNombre(nombre.trim());
+        m.setDescripcion(descripcion.trim());
+        m.setCantidad(Integer.parseInt(cantidad.trim()));
+        m.setFechaVencimiento(LocalDate.parse(fecha.trim(), Medicamentos.FORMATO));
+        return null;
+    }
+
+    public static String eliminarMedicamento(String codigo) {
+        Medicamentos m = buscarPorCodigo(codigo);
+        if (m == null) {
+            return "Medicamento no encontrado.";
+        }
+        medicamentos.remove(m);
+        return null;
+    }
+
+    private static String validarDatos(String nombre, String cantidad, String fecha) {
+        if (nombre.isBlank()) {
+            return "El nombre es obligatorio.";
+        }
+        try {
+            if (Integer.parseInt(cantidad.trim()) <= 0) {
+                return "La cantidad debe ser mayor que 0.";
+            }
+        } catch (NumberFormatException e) {
+            return "La cantidad debe ser un numero entero.";
+        }
+        try {
+            LocalDate.parse(fecha.trim(), Medicamentos.FORMATO);
+        } catch (DateTimeParseException e) {
+            return "Fecha invalida. Use DD/MM/AAAA (ejemplo: 25/12/2027).";
+        }
+        return null;
+    }
+
     // ---------- METODOS AUXILIARES ----------
 
     // Busca por codigo exacto (sin importar mayusculas); devuelve null si no existe

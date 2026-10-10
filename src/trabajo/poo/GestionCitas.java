@@ -188,6 +188,89 @@ public class GestionCitas {
         System.out.println("Cita cancelada correctamente.");
     }
 
+    // ---------- METODOS PARA LA INTERFAZ GRAFICA ----------
+    // Devuelven un mensaje de error, o null si todo salio bien
+
+    public ArrayList<Cita> getCitas() {
+        return citas;
+    }
+
+    public String registrarCita(String dni, String codigoMedico, String fecha,
+                                String hora, String motivo) {
+        if (!dni.matches("\\d{8}")) {
+            return "El DNI debe tener exactamente 8 numeros.";
+        }
+        if (pacientes.buscarPaciente(dni) == null) {
+            return "No existe un paciente con ese DNI. Registrelo primero en Pacientes.";
+        }
+        Medico medico = medicos.buscarPorCodigo(codigoMedico);
+        if (medico == null) {
+            return "No existe un medico con ese codigo. Registrelo primero en Personal medico.";
+        }
+        String error = validarFechaHora(fecha, hora);
+        if (error != null) {
+            return error;
+        }
+        if (motivo.isEmpty()) {
+            return "El motivo es obligatorio.";
+        }
+        String choque = buscarChoque(dni, medico.getCodigo(), fecha, hora, -1);
+        if (choque != null) {
+            return choque;
+        }
+        citas.add(new Cita(siguienteId++, dni, medico.getCodigo(), fecha, hora, motivo));
+        return null;
+    }
+
+    public String modificarCita(int id, String fecha, String hora, String motivo) {
+        Cita cita = buscarPorId(id);
+        if (cita == null) {
+            return "Cita no encontrada.";
+        }
+        String error = validarFechaHora(fecha, hora);
+        if (error != null) {
+            return error;
+        }
+        if (motivo.isEmpty()) {
+            return "El motivo es obligatorio.";
+        }
+        String choque = buscarChoque(cita.getDniPaciente(), cita.getCodigoMedico(),
+                fecha, hora, cita.getId());
+        if (choque != null) {
+            return choque;
+        }
+        cita.setFecha(fecha);
+        cita.setHora(hora);
+        cita.setMotivo(motivo);
+        return null;
+    }
+
+    public String cancelarCita(int id) {
+        Cita cita = buscarPorId(id);
+        if (cita == null) {
+            return "Cita no encontrada.";
+        }
+        citas.remove(cita);
+        return null;
+    }
+
+    private String validarFechaHora(String fecha, String hora) {
+        try {
+            LocalDate f = LocalDate.parse(fecha, FORMATO_FECHA);
+            if (f.isBefore(LocalDate.now())) {
+                return "La fecha de la cita no puede ser pasada.";
+            }
+        } catch (DateTimeParseException e) {
+            return "Fecha no valida. Use DD/MM/AAAA (ejemplo: 25/12/2026).";
+        }
+        try {
+            LocalTime.parse(hora, FORMATO_HORA);
+        } catch (DateTimeParseException e) {
+            return "Hora no valida. Use HH:MM de 24 horas (ejemplo: 09:30).";
+        }
+        return null;
+    }
+
     // ---------- METODOS AUXILIARES ----------
 
     private Cita buscarPorId(int id) {

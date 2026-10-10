@@ -11,6 +11,7 @@ import java.util.Scanner;
 
 public class GestionUsuarios {
 
+    // Archivo donde se guardan los usuarios (se crea solo en la carpeta del proyecto)
     private static final Path ARCHIVO = Paths.get("usuarios.txt");
 
     private ArrayList<Usuario> lista = new ArrayList<>();
@@ -21,20 +22,24 @@ public class GestionUsuarios {
         cargar();
     }
 
+    // El Menu lo usa para saber si ya existe algun usuario registrado
     public boolean hayUsuarios() {
         return !lista.isEmpty();
     }
 
+    // Permite registrarse desde la pantalla de inicio (antes de iniciar sesion)
     public void registrar(Scanner scanner) {
         sc = scanner;
         registrar();
     }
 
+    // Lo usa el Login para validar usuario y contrasena
     public boolean validarCredenciales(String usuario, String contrasena) {
         Usuario u = buscarPorUsuario(usuario);
         return u != null && u.getContrasena().equals(contrasena);
     }
 
+    // Recibe el Scanner del Menu principal (asi no hay dos Scanner)
     public void menu(Scanner scanner) {
         sc = scanner;
         int opcion;
@@ -78,6 +83,7 @@ public class GestionUsuarios {
             System.out.println("Todos los datos son obligatorios.");
             return;
         }
+        // El punto y coma separa los datos dentro del archivo
         if (nombre.contains(";") || usuario.contains(";") || contrasena.contains(";")) {
             System.out.println("No se permite el caracter ; en los datos.");
             return;
@@ -159,6 +165,60 @@ public class GestionUsuarios {
         return null;
     }
 
+    // ---------- METODOS PARA LA INTERFAZ GRAFICA ----------
+    // Los tres devuelven un mensaje de error, o null si todo salio bien
+
+    public ArrayList<Usuario> getLista() {
+        return lista;
+    }
+
+    public String registrarDatos(String nombre, String usuario, String contrasena) {
+        if (nombre.isBlank() || usuario.isBlank() || contrasena.isBlank()) {
+            return "Todos los datos son obligatorios.";
+        }
+        if (nombre.contains(";") || usuario.contains(";") || contrasena.contains(";")) {
+            return "No se permite el caracter ; en los datos.";
+        }
+        if (buscarPorUsuario(usuario) != null) {
+            return "Ese usuario ya existe.";
+        }
+        lista.add(new Usuario(siguienteId++, nombre, usuario, contrasena));
+        guardar();
+        return null;
+    }
+
+    // Si nombre o contrasena llegan vacios, se mantiene el dato anterior
+    public String modificarDatos(String usuario, String nombre, String contrasena) {
+        Usuario u = buscarPorUsuario(usuario);
+        if (u == null) {
+            return "Usuario no encontrado.";
+        }
+        if (nombre.contains(";") || contrasena.contains(";")) {
+            return "No se permite el caracter ; en los datos.";
+        }
+        if (!nombre.isBlank()) {
+            u.setNombre(nombre);
+        }
+        if (!contrasena.isBlank()) {
+            u.setContrasena(contrasena);
+        }
+        guardar();
+        return null;
+    }
+
+    public String eliminarUsuario(String usuario) {
+        Usuario u = buscarPorUsuario(usuario);
+        if (u == null) {
+            return "Usuario no encontrado.";
+        }
+        lista.remove(u);
+        guardar();
+        return null;
+    }
+
+    // ---------- GUARDAR Y CARGAR EN ARCHIVO ----------
+
+    // Escribe todos los usuarios en usuarios.txt (una linea por usuario)
     private void guardar() {
         List<String> lineas = new ArrayList<>();
         for (Usuario u : lista) {
@@ -172,6 +232,7 @@ public class GestionUsuarios {
         }
     }
 
+    // Lee usuarios.txt al iniciar el programa (si existe)
     private void cargar() {
         if (!Files.exists(ARCHIVO)) {
             return;
@@ -189,7 +250,7 @@ public class GestionUsuarios {
                         siguienteId = id + 1;
                     }
                 } catch (NumberFormatException e) {
-                    
+                    // linea danada: se ignora
                 }
             }
         } catch (IOException e) {
